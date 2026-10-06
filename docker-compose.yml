@@ -1,0 +1,38 @@
+version: "3.8"
+
+# 一键起环境：mysql 8 + redis 7（**在宿主机上执行**）。仓库自带，符合标注规范「已容器化，可一键起环境」。
+# 用法：docker compose up -d
+# ⚠️ 做题容器内没有 docker，不要在里面跑本文件；容器内连这套中间件请走 host.docker.internal
+#    （application-dev.yml 的默认值即 host.docker.internal:3306 / :6379，凭据 root/root，Redis 无密码）。
+# 库名：MYSQL_DATABASE 只是首次初始化的默认库；每道题的独立库（如 any_NN_xxx）由 `solo-new` 建。
+services:
+  mysql:
+    image: mysql:8.2.0
+    container_name: some-pro-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: some_pro
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    volumes:
+      - some-pro-mysql-data:/var/lib/mysql
+
+  redis:
+    image: redis:7.2
+    container_name: some-pro-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - some-pro-redis-data:/data
+
+volumes:
+  some-pro-mysql-data:
+  some-pro-redis-data:
