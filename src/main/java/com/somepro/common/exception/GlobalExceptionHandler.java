@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.web.server.ServerWebInputException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import reactor.core.publisher.Mono;
@@ -31,6 +32,17 @@ public class GlobalExceptionHandler {
         FieldError error = e.getFieldErrors().stream().findFirst().orElse(null);
         String msg = error == null ? "参数校验失败" : error.getDefaultMessage();
         log.warn("参数校验失败 field={} msg={}", error == null ? "-" : error.getField(), msg);
+        return Mono.just(Result.fail(msg));
+    }
+
+    /** 缺少必填 query 参数 / 参数类型不匹配（WebFlux 下为 ServerWebInputException）。 */
+    @ExceptionHandler(ServerWebInputException.class)
+    public Mono<Result<Void>> handleInput(ServerWebInputException e) {
+        String msg = "请求参数不合法";
+        if (e.getMethodParameter() != null) {
+            msg = "缺少或非法的参数：" + e.getMethodParameter().getParameterName();
+        }
+        log.warn("请求参数异常 msg={}", e.getMessage());
         return Mono.just(Result.fail(msg));
     }
 
